@@ -16,6 +16,8 @@ class Employer extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<Employer> {
+  Map data;
+  List userData;
   var unArchiveList;
   var archiveList;
   //List<archiveList> _items1 = [];
@@ -23,20 +25,30 @@ class _MyHomePageState extends State<Employer> {
   void initState() {
     debugger();
     getData();
+    getDummyData();
     super.initState();
+  }
+
+  void getDummyData() async {
+    http.Response response =
+        await http.get("https://reqres.in/api/users?page=2");
+    data = json.decode(response.body);
+    setState(() {
+      userData = data["data"];
+    });
   }
 
   void getData() async {
     var response = await http.get(
         Uri.encodeFull(
-            "http://10.0.2.2:5000/api/v1/employer/GetAllMemberEmployers"),
+            "https://doctordiary.bma.org.uk/api/v1/employer/GetAllMemberEmployers"),
         headers: {"Accept": "application/json"});
     var responseBody = json.decode(response.body);
 
-    this.unArchiveList = responseBody.unarchived;
-    //this.archiveList = responseBody[archived];
-    // print(this.unArchiveList);
-    print(responseBody);
+    setState(() {
+      this.unArchiveList = responseBody.MemberEmployersMob;
+      this.archiveList = responseBody.ArchivedMemberEmployersMob;
+    });
   }
 
   Widget build(BuildContext context) {
