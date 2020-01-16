@@ -45,11 +45,12 @@ class ArchivedMemberEmployersMob {
 }
 
 class Data {
-  final List<MemberEmployerMob> unarchived;
-  final List<ArchivedMemberEmployersMob> archived;
+   List<MemberEmployerMob> unarchived;
+   List<ArchivedMemberEmployersMob> archived;
 
-  Data({
-this.archived,
-this.unarchived,
-  });
+  Data.fromJson(Map<String, dynamic> json){
+unarchived = json['MemberEmployersMob'];
+archived = json['ArchivedMemberEmployersMob'];
 }
+}
+
