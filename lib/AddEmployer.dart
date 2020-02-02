@@ -1,6 +1,28 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
 
+import 'models/AddEmployerData.dart';
+
+
+Future<Post> createPost(String url, {Map body}) async {
+  print(body);
+  return http.post(url, body: body).then((http.Response response) {
+    
+    debugger();
+    print(response.body);
+    final int statusCode = response.statusCode;
+    
+
+    if (statusCode < 200 || statusCode > 400 || json == null) {
+      throw new Exception("Error while fetching data");
+    }
+    return Post.fromJson(json.decode(response.body));
+  });
+}
 
 class AddEmployer extends StatefulWidget {
   @override
@@ -8,32 +30,42 @@ class AddEmployer extends StatefulWidget {
 }
 
 class _AddEmployerState extends State<AddEmployer> {
+  
+  // final Future<Post> post;
+  // _AddEmployerState({Key key, this.post}) : super(key: key);
+  static final createPostUrl=
+      'http://10.0.2.2:5000/api/v1/employer/SaveMemberEmployer';
+  TextEditingController searchController = new TextEditingController();
+  TextEditingController dccController = new TextEditingController();
+  TextEditingController spaController = new TextEditingController();
+  TextEditingController epasController = new TextEditingController();
+
   int groupValue = 1;
-  DateTime selectedDate = DateTime.now();
-  bool isSwitched = true;
-  DateTime selectedendDate = DateTime.now();
-  bool contractisSwitched = false;
+  DateTime startDate = DateTime.now();
+  bool isContractFullTime = true;
+  DateTime endDate = DateTime.now();
+  bool isMemberJobAnnualised = false;
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
         context: context,
-        initialDate: selectedDate,
+        initialDate: startDate,
         firstDate: DateTime(2015, 8),
         lastDate: DateTime(2101));
-    if (picked != null && picked != selectedDate)
+    if (picked != null && picked != startDate)
       setState(() {
-        selectedDate = picked;
+        startDate = picked;
       });
   }
 
   Future<Null> _selectEndDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
         context: context,
-        initialDate: selectedendDate,
+        initialDate: endDate,
         firstDate: DateTime(2015, 8),
         lastDate: DateTime(2101));
-    if (picked != null && picked != selectedendDate)
+    if (picked != null && picked != endDate)
       setState(() {
-        selectedendDate = picked;
+        endDate = picked;
       });
   }
 
@@ -51,9 +83,20 @@ class _AddEmployerState extends State<AddEmployer> {
           title: new Text('Add Employer'),
           //centerTitle: true,
           backgroundColor: Colors.pink,
+          // actions: <Widget>[
+          //   IconButton(
+          //   child: Text('SAVE')
+
+          //   ),
+          //   IconButton(icon: Icon(Icons.close),  onPressed: () => Navigator.of(context).pop()),
+          // ],
           actions: <Widget>[
-            Container(padding: const EdgeInsets.all(20.0), child: Text('SAVE')),
-            IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+            FlatButton(
+              textColor: Colors.white,
+              onPressed: () {},
+              child: Text("Save"),
+              shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+            ),
           ],
         ),
         body: SingleChildScrollView(
@@ -105,7 +148,8 @@ class _AddEmployerState extends State<AddEmployer> {
                       fontSize: 18.0,
                     ),
                   ),
-                  new TextFormField(
+                  new TextField(
+                    controller: searchController,
                     decoration: InputDecoration(
                       labelText: 'Search',
                     ),
@@ -117,7 +161,7 @@ class _AddEmployerState extends State<AddEmployer> {
                         onPressed: () => _selectDate(context),
                         child: Text('Start date'),
                       ),
-                      Text("${selectedDate.toLocal()}"),
+                      Text("${startDate.toLocal()}"),
                     ],
                   ),
                   Divider(),
@@ -127,7 +171,7 @@ class _AddEmployerState extends State<AddEmployer> {
                         onPressed: () => _selectEndDate(context),
                         child: Text('End date'),
                       ),
-                      Text("${selectedendDate.toLocal()}"),
+                      Text("${endDate.toLocal()}"),
                     ],
                   ),
                   Divider(),
@@ -138,10 +182,10 @@ class _AddEmployerState extends State<AddEmployer> {
                         style: new TextStyle(fontSize: 16.0),
                       ),
                       Switch(
-                        value: isSwitched,
+                        value: isContractFullTime,
                         onChanged: (value) {
                           setState(() {
-                            isSwitched = value;
+                            isContractFullTime = value;
                           });
                         },
                         activeTrackColor: Colors.pink,
@@ -156,10 +200,10 @@ class _AddEmployerState extends State<AddEmployer> {
                         style: new TextStyle(fontSize: 16.0),
                       ),
                       Switch(
-                        value: contractisSwitched,
+                        value: isMemberJobAnnualised,
                         onChanged: (value) {
                           setState(() {
-                            contractisSwitched = value;
+                            isMemberJobAnnualised = value;
                           });
                         },
                         activeTrackColor: Colors.pink,
@@ -176,22 +220,41 @@ class _AddEmployerState extends State<AddEmployer> {
                     ),
                   ),
                   new TextFormField(
+                    controller: dccController,
                     decoration: InputDecoration(
                       labelText: 'DCC (normal contractual)*',
                     ),
                   ),
 
                   new TextFormField(
+                    controller: spaController,
                     decoration: InputDecoration(
                       labelText: 'SPA *',
                     ),
                   ),
 
                   new TextFormField(
+                    controller: epasController,
                     decoration: InputDecoration(
                       labelText: 'EPAs/APAs (extra-contractual)',
                     ),
                   ),
+
+                  new RaisedButton(
+                    onPressed: () async {
+                      debugger();
+                      Post newPost = new Post(
+                        //employerId: "0",
+                        name: searchController.text,
+                        //IsMemberJobAnnualised: isSwitched,
+                      );
+                      Post p = await createPost(createPostUrl,
+                          body: newPost.toMap());
+                      print(newPost.toMap());
+                      print(p.name);
+                    },
+                    child: const Text("SAVE"),
+                  )
                 ],
               ),
             ),
