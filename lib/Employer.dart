@@ -48,12 +48,12 @@ class _MyHomePageState extends State<Employer> {
     setState(() {
       var responseJson = json.decode(response.body);
       memberEmployersMob = responseJson['MemberEmployersMob']
-          .map((data) => MemberEmployerMob.fromJson(data))
+          .map((employerData) => MemberEmployerMob.fromJson(employerData))
           .toList()
           .cast<MemberEmployerMob>();
 
       archivedMemberEmployersMob = responseJson['ArchivedMemberEmployersMob']
-          .map((data1) => ArchivedMemberEmployersMob.fromJson(data1))
+          .map((archivedData) => ArchivedMemberEmployersMob.fromJson(archivedData))
           .toList()
           .cast<ArchivedMemberEmployersMob>();
     });
