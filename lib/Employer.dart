@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+//import 'package:intl/intl.dart';
 import 'package:loginapp/AddEmployer.dart';
 import 'package:loginapp/Diary.dart';
 import 'package:loginapp/Settings.dart';
@@ -167,7 +168,6 @@ class _MyHomePageState extends State<Employer> {
           children: <Widget>[
             new Column(
               children: memberEmployersMob?.map((tx) {
-                    print(tx);
                     return Card(
                       child: Column(
                         children: <Widget>[
@@ -194,15 +194,15 @@ class _MyHomePageState extends State<Employer> {
                           Column(
                             //crossAxisAlignment: CrossAxisAlignment.end,
                             children: <Widget>[
-                              Text(
-                                tx.lastModifiedDate,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
                               // Text(
-                              //   //DateFormat.yMMMd().format(tx.lastModifiedDate),
+                              //   tx.lastModifiedDate,
+                              //   style: TextStyle(
+                              //     fontSize: 18,
+                              //     fontWeight: FontWeight.normal,
+                              //   ),
+                              // ),
+                              // Text(
+                              //   DateFormat.yMMMd().format(tx.lastModifiedDate),
                               //   style: TextStyle(color: Colors.grey),
                               // )
                             ],
@@ -251,17 +251,17 @@ class _MyHomePageState extends State<Employer> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  Text(
-                                    '${ame.lastModifiedDate}',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
                                   // Text(
-                                  //   DateFormat.yMMMd().format(ame.date),
-                                  //   style: TextStyle(color: Colors.grey),
-                                  // )
+                                  //   '${ame.lastModifiedDate}',
+                                  //   style: TextStyle(
+                                  //     fontSize: 18,
+                                  //     fontWeight: FontWeight.normal,
+                                  //   ),
+                                  // ),
+                              //     Text(
+                              //   DateFormat.yMMMd().format(ame.lastModifiedDate),
+                              //   style: TextStyle(color: Colors.black),
+                              // )
                                 ],
                               ),
                             ],

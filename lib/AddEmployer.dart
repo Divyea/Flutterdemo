@@ -1,27 +1,101 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
 import 'models/AddEmployerData.dart';
+import 'models/api_response.dart';
 
+class _InputDropdown extends StatelessWidget {
+  const _InputDropdown({
+    Key key,
+    this.child,
+    this.labelText,
+    this.valueText,
+    this.valueStyle,
+    this.onPressed,
+  }) : super(key: key);
 
-Future<Post> createPost(String url, {Map body}) async {
-  print(body);
-  return http.post(url, body: body).then((http.Response response) {
-    
-    debugger();
-    print(response.body);
-    final int statusCode = response.statusCode;
-    
+  final String labelText;
+  final String valueText;
+  final TextStyle valueStyle;
+  final VoidCallback onPressed;
+  final Widget child;
 
-    if (statusCode < 200 || statusCode > 400 || json == null) {
-      throw new Exception("Error while fetching data");
-    }
-    return Post.fromJson(json.decode(response.body));
-  });
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: labelText,
+        ),
+        baseStyle: valueStyle,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(valueText, style: valueStyle),
+            Icon(
+              Icons.arrow_drop_down,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.grey.shade700
+                  : Colors.white70,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DateTimePicker extends StatelessWidget {
+  const _DateTimePicker({
+    Key key,
+    this.labelText,
+    this.selectedDate,
+    this.selectedTime,
+    this.selectDate,
+  }) : super(key: key);
+
+  final String labelText;
+  final DateTime selectedDate;
+  final TimeOfDay selectedTime;
+  final ValueChanged<DateTime> selectDate;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2015, 8),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) selectDate(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle valueStyle = Theme.of(context).textTheme.headline6;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        Expanded(
+          flex: 4,
+          child: _InputDropdown(
+            labelText: labelText,
+            valueText: DateFormat.yMMMd().format(selectedDate),
+            valueStyle: valueStyle,
+            onPressed: () {
+              _selectDate(context);
+            },
+          ),
+        ),
+        const SizedBox(width: 12.0),
+      ],
+    );
+  }
 }
 
 class AddEmployer extends StatefulWidget {
@@ -30,11 +104,22 @@ class AddEmployer extends StatefulWidget {
 }
 
 class _AddEmployerState extends State<AddEmployer> {
-  
-  // final Future<Post> post;
-  // _AddEmployerState({Key key, this.post}) : super(key: key);
-  static final createPostUrl=
-      'http://10.0.2.2:5000/api/v1/employer/SaveMemberEmployer';
+  static const API = 'http://10.0.2.2:5000/api/v1/employer/SaveMemberEmployer';
+  static const headers = {'Content-Type': 'application/json'};
+
+  Future<APIResponse<bool>> createNote(MemberEmployerVM item) {
+    debugger();
+    return http
+        .post(API, headers: headers, body: json.encode(item.tojson()))
+        .then((data) {
+      if (data.statusCode == 201) {
+        return APIResponse<bool>(data: true);
+      }
+      return APIResponse<bool>(error: true, errorMessage: 'An error occured');
+    }).catchError((_) =>
+            APIResponse<bool>(error: true, errorMessage: 'An error occured'));
+  }
+
   TextEditingController searchController = new TextEditingController();
   TextEditingController dccController = new TextEditingController();
   TextEditingController spaController = new TextEditingController();
@@ -45,29 +130,6 @@ class _AddEmployerState extends State<AddEmployer> {
   bool isContractFullTime = true;
   DateTime endDate = DateTime.now();
   bool isMemberJobAnnualised = false;
-  Future<Null> _selectDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-        context: context,
-        initialDate: startDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
-    if (picked != null && picked != startDate)
-      setState(() {
-        startDate = picked;
-      });
-  }
-
-  Future<Null> _selectEndDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-        context: context,
-        initialDate: endDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
-    if (picked != null && picked != endDate)
-      setState(() {
-        endDate = picked;
-      });
-  }
 
   Widget build(BuildContext context) {
     return new MaterialApp(
@@ -83,19 +145,45 @@ class _AddEmployerState extends State<AddEmployer> {
           title: new Text('Add Employer'),
           //centerTitle: true,
           backgroundColor: Colors.pink,
-          // actions: <Widget>[
-          //   IconButton(
-          //   child: Text('SAVE')
-
-          //   ),
-          //   IconButton(icon: Icon(Icons.close),  onPressed: () => Navigator.of(context).pop()),
-          // ],
           actions: <Widget>[
+            //IconButton(icon: Icon(Icons.close),  onPressed: () => Navigator.of(context).pop()),
             FlatButton(
               textColor: Colors.white,
-              onPressed: () {},
-              child: Text("Save"),
-              shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
+              onPressed: () async {
+                debugger();
+                final note = MemberEmployerVM(
+                  employerName: searchController.text,
+                  //startDate: DateTime.parse("2020-02-27 20:18:04Z"),
+                  //endDate: endDate.toLocal(),
+                  isContractFullTime: isContractFullTime,
+                  isMemberJobAnnualised: isMemberJobAnnualised,
+                  memberNumber: "TEST995",
+                );
+                final result = await createNote(note);
+                final title = 'Done';
+                final text = result.error
+                    ? (result.errorMessage ?? 'An error occurred')
+                    : 'Employer created successfully';
+                showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                          title: Text(title),
+                          content: Text(text),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text('Ok'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            )
+                          ],
+                        )).then((data) {
+                  if (result.data) {
+                    Navigator.of(context).pop();
+                  }
+                });
+              },
+              child: Text('SAVE'),
             ),
           ],
         ),
@@ -154,27 +242,26 @@ class _AddEmployerState extends State<AddEmployer> {
                       labelText: 'Search',
                     ),
                   ),
-                  //Divider(),
-                  new Row(
-                    children: <Widget>[
-                      RaisedButton(
-                        onPressed: () => _selectDate(context),
-                        child: Text('Start date'),
-                      ),
-                      Text("${startDate.toLocal()}"),
-                    ],
+                  _DateTimePicker(
+                    labelText: 'Start date',
+                    selectedDate: startDate,
+                    //selectedTime: _fromTime,
+                    selectDate: (DateTime date) {
+                      setState(() {
+                        startDate = date;
+                      });
+                    },
                   ),
-                  Divider(),
-                  new Row(
-                    children: <Widget>[
-                      RaisedButton(
-                        onPressed: () => _selectEndDate(context),
-                        child: Text('End date'),
-                      ),
-                      Text("${endDate.toLocal()}"),
-                    ],
+                  _DateTimePicker(
+                    labelText: 'End date',
+                    selectedDate: endDate,
+                    //selectedTime: _toTime,
+                    selectDate: (DateTime date) {
+                      setState(() {
+                        endDate = date;
+                      });
+                    },
                   ),
-                  Divider(),
                   new Row(
                     children: <Widget>[
                       new Text(
@@ -211,7 +298,9 @@ class _AddEmployerState extends State<AddEmployer> {
                       ),
                     ],
                   ),
-                  Divider(),
+                  Divider(
+                    color: Colors.grey,
+                  ),
                   new Text(
                     'PAs per week',
                     style: new TextStyle(
@@ -225,36 +314,18 @@ class _AddEmployerState extends State<AddEmployer> {
                       labelText: 'DCC (normal contractual)*',
                     ),
                   ),
-
                   new TextFormField(
                     controller: spaController,
                     decoration: InputDecoration(
                       labelText: 'SPA *',
                     ),
                   ),
-
                   new TextFormField(
                     controller: epasController,
                     decoration: InputDecoration(
                       labelText: 'EPAs/APAs (extra-contractual)',
                     ),
                   ),
-
-                  new RaisedButton(
-                    onPressed: () async {
-                      debugger();
-                      Post newPost = new Post(
-                        //employerId: "0",
-                        name: searchController.text,
-                        //IsMemberJobAnnualised: isSwitched,
-                      );
-                      Post p = await createPost(createPostUrl,
-                          body: newPost.toMap());
-                      print(newPost.toMap());
-                      print(p.name);
-                    },
-                    child: const Text("SAVE"),
-                  )
                 ],
               ),
             ),
